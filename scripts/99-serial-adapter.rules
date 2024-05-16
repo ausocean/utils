@@ -1,0 +1,6 @@
+# HOWTO:
+# sudo cp 99-serial-adapter.rules /etc/udev/rules.d/
+# sudo udevadm control --reload-rules
+
+# 067b:2303
+ACTION=="add", SUBSYSTEM=="usb", ATTRS{idVendor}=="067b", ATTRS{idProduct}=="2303", MODE="660", GROUP="plugdev"
