@@ -59,7 +59,6 @@ func main() {
 		return
 	}
 
-	syscall.Sync()
 	err := syscall.Reboot(syscall.LINUX_REBOOT_CMD_RESTART)
 	if err != nil {
 		log.Fatalf("reboot error: %v", err)
