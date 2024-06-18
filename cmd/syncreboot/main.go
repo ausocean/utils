@@ -30,15 +30,26 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"syscall"
 )
 
+// Current software version.
+const version = "v1.0.0"
+
 func main() {
+	showVersion := flag.Bool("version", false, "show version")
 	shutdownPtr := flag.Bool("s", false, "shutdown system")
 	flag.Parse()
 
+	if *showVersion {
+		fmt.Println(version)
+		os.Exit(0)
+	}
+
+	syscall.Sync()
 	if *shutdownPtr {
 		err := syscall.Reboot(syscall.LINUX_REBOOT_CMD_POWER_OFF)
 		if err != nil {
@@ -48,7 +59,6 @@ func main() {
 		return
 	}
 
-	syscall.Sync()
 	err := syscall.Reboot(syscall.LINUX_REBOOT_CMD_RESTART)
 	if err != nil {
 		log.Fatalf("reboot error: %v", err)
