@@ -78,23 +78,23 @@ for (( i = 0; i < $NumComponents; i++ )); do
     tmpFile="$TmpDir/$name"
     curl -s -o "$tmpFile.gz" "$url"
     if [ -f "$tmpFile.gz" ]; then
-	if [ -n "$Debug" ]; then log "Debug: Successfully downloaded $tmpFile.gz"; fi
-	gunzip -f "$tmpFile.gz"
+      if [ -n "$Debug" ]; then log "Debug: Successfully downloaded $tmpFile.gz"; fi
+        gunzip -f "$tmpFile.gz"
         if [ $? -ne 0 ]; then
           log "Error: failed to unzip $tmpFile.gz"
-	  exit 1
-	else
-	  if [ -n "$Debug" ]; then log "Debug: Unzipped $tmpFile.gz"; fi
-	fi
-        checksum=$(md5sum "$tmpFile" | cut -d ' ' -f 1)
-        if [ "$checksum" != "$expectedChecksum" ]; then
-          log "Error: $tmpFile checksum $checksum does not match $expectedChecksum"
-	  exit 1
-	fi
+        exit 1
+      else
+        if [ -n "$Debug" ]; then log "Debug: Unzipped $tmpFile.gz"; fi
+      fi
+      checksum=$(md5sum "$tmpFile" | cut -d ' ' -f 1)
+      if [ "$checksum" != "$expectedChecksum" ]; then
+        log "Error: $tmpFile checksum $checksum does not match $expectedChecksum"
+        exit 1
+      fi
     else
       log "Error: failed to download $url"
       exit 1
-    fi	  
+    fi
   fi
 done
 
