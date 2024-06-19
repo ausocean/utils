@@ -5,13 +5,13 @@
 #
 # Packages describe the software components used by AusOcean devices.
 # This scripts downloads the package for a device and (optional) version,
-# then installs all components are are new or changed.
+# then installs all components are new or changed.
 # External dependencies: md5sum, jq
 Usage="Usage: pkg-upgrade.sh [-v | -version | device [pkg-version]]"
 ScriptVersion="v0.1.0"
 LogFile="/var/log/netsender/stream.log"
 URL="http://center.cloudblue.org/dl"
-Debug=1
+#Debug=1
 
 # log wraps echo with the current date and time.
 function log() {
