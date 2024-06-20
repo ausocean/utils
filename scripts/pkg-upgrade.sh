@@ -4,8 +4,8 @@
 # Author: Alan Noble <alan@ausocean.org>
 #
 # Packages describe the software components used by AusOcean devices.
-# This scripts downloads the package for a device and (optional) version,
-# then installs all components are new or changed.
+# This script downloads the package for a device and (optional) version,
+# then installs all components that are new or changed.
 # External dependencies: md5sum, jq
 Usage="Usage: pkg-upgrade.sh [-v | -version | device [pkg-version]]"
 ScriptVersion="v0.1.0"
@@ -32,7 +32,7 @@ fi
 
 # Get device and (optional) package version.
 if [[ -z "$1" ]]; then
-  log "Error: missing required argument (dev)" >&2
+  log "Error: missing required argument (device)" >&2
   exit 1
 fi
 Device="$1"
@@ -73,15 +73,16 @@ for (( i = 0; i < $NumComponents; i++ )); do
     if [ -n "$Debug" ]; then log "Debug: $Device/$name $version unchanged"; fi
   else
     (( Changed++ ))
+    log "Info: Upgrading $Device/$name/$version"
     url="$URL/$Device/$name/$version/$name.gz"
     if [ -n "$Debug" ]; then log "Debug: Downloading $url"; fi
     tmpFile="$TmpDir/$name"
     curl -s -o "$tmpFile.gz" "$url"
     if [ -f "$tmpFile.gz" ]; then
       if [ -n "$Debug" ]; then log "Debug: Successfully downloaded $tmpFile.gz"; fi
-        gunzip -f "$tmpFile.gz"
-        if [ $? -ne 0 ]; then
-          log "Error: failed to unzip $tmpFile.gz"
+      gunzip -f "$tmpFile.gz"
+      if [ $? -ne 0 ]; then
+        log "Error: failed to unzip $tmpFile.gz"
         exit 1
       else
         if [ -n "$Debug" ]; then log "Debug: Unzipped $tmpFile.gz"; fi
@@ -152,7 +153,7 @@ for (( i = 0; i < $NumComponents; i++ )); do
 done
 
 if [ "$Updated" != "$Changed" ]; then
-  # Pass 3: Unsuccessul upgrade; restore backups.
+  # Pass 3A: Unsuccessul upgrade; restore backups.
   log "Error: only updated $Updated of $Changed components; reverting"
   for (( i = 0; i < $NumComponents; i++ )); do
     name=$(jq -r ".components[$i] | .name" <<< "$Pkg")
@@ -168,8 +169,8 @@ if [ "$Updated" != "$Changed" ]; then
   exit 1
 fi
 
-# Pass 4: Remove backups.
-log "Debug: removing backups"
+# Pass 3B: Remove backups.
+if [ -n "$Debug" ]; then log "Debug: Removing backups"; fi
 for (( i = 0; i < $NumComponents; i++ )); do
   name=$(jq -r ".components[$i] | .name" <<< "$Pkg")
   dir=$(jq -r ".components[$i] | .dir" <<< "$Pkg")
