@@ -6,6 +6,7 @@
 # Packages describe the software components used by AusOcean devices.
 # This script downloads the package for a device and (optional) version,
 # then installs all components that are new or changed.
+#
 # External dependencies: md5sum, jq
 Usage="Usage: pkg-upgrade.sh [-v | -version | device [pkg-version]]"
 ScriptVersion="v0.1.0"
@@ -47,7 +48,15 @@ log "Info: Commencing upgrade of $Device $PkgVersion"
 PkgURL="$URL/$Device/pkg/$PkgVersion/pkg.json"
 if [ -n "$Debug" ]; then log "Debug: Downloading $PkgURL"; fi
 Pkg=$(curl -s "$PkgURL")
+if [ $? -ne 0 ]; then
+  log "Error: could not get $PkgURL"
+  exit 1
+fi
 NumComponents=$(jq -r '.components | length' <<< "$Pkg")
+if [ $? -ne 0 ]; then
+  log "Error: invalid package JSON at $PkgURL"
+  exit 1
+fi
 if [ -n "$Debug" ]; then log "Debug: $Device $PkgVersion has $NumComponents components"; fi
 if [[ -z $NumComponents ]]; then
   log "Info: $Device $PkgVersion has no components to upgrade"
