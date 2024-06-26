@@ -1,13 +1,16 @@
 BIN = syncreboot
-DIR = /usr/local/bin
+BASEDIR = /opt/ausocean
+BINDIR = $(BASEDIR)/bin
 
 all:
 	go build
 	@echo "\nNow run sudo make install\n"
 
 install:
-	cp -pf $(BIN) $(DIR)
-	sudo setcap cap_sys_boot=ep $(DIR)/$(BIN)
+	mkdir -p $(BINDIR)
+	chmod -R guo+rwx $(BASEDIR)
+	cp -pf $(BIN) $(BINDIR)
+	sudo setcap cap_sys_boot=ep $(BINDIR)/$(BIN)
 
 clean:
 	rm $(BIN)
