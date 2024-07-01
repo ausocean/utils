@@ -91,7 +91,7 @@ for (( i = 0; i < $NumComponents; i++ )); do
     (( Changed++ ))
     log "Info: Upgrading $Device/$name/$version"
     if [ "$shared" == "true" ]; then
-      parent="shared"
+      parent="share"
       log "Info: $Device/$name/$version is shared"
     else
       parent="$Device"
@@ -207,6 +207,7 @@ for (( i = 0; i < $NumComponents; i++ )); do
     fi
   fi
 done
+if [ -z "$Debug" ]; then rm -rf "$TmpDir"; fi
 
 # Save a copy of the package.
 DataDir="/opt/ausocean/data"
