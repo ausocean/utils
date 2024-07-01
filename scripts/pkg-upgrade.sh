@@ -9,7 +9,7 @@
 #
 # External dependencies: md5sum, jq
 Usage="Usage: pkg-upgrade.sh [-v | -version | device [pkg-version]]"
-ScriptVersion="v0.1.0"
+ScriptVersion="v0.2.0"
 LogFile="/var/log/netsender/stream.log"
 URL="http://center.cloudblue.org/dl"
 #Debug=1
@@ -45,11 +45,17 @@ fi
 log "Info: Commencing upgrade of $Device $PkgVersion"
 
 # Fetch the requested package.
+PkgFile="/tmp/pkg.json"
 PkgURL="$URL/$Device/pkg/$PkgVersion/pkg.json"
 if [ -n "$Debug" ]; then log "Debug: Downloading $PkgURL"; fi
-Pkg=$(curl -s "$PkgURL")
+curl -s "$PkgURL" -o "$PkgFile"
 if [ $? -ne 0 ]; then
   log "Error: could not get $PkgURL"
+  exit 1
+fi
+Pkg=$(cat "$PkgFile")
+if [ $? -ne 0 ]; then
+  log "Error: could not read $PkgFile"
   exit 1
 fi
 NumComponents=$(jq -r '.components | length' <<< "$Pkg")
@@ -69,6 +75,7 @@ TmpDir="/tmp/$Device/$PkgVersion"
 mkdir -p "$TmpDir"
 for (( i = 0; i < $NumComponents; i++ )); do
   name=$(jq -r ".components[$i] | .name" <<< "$Pkg")
+  shared=$(jq -r ".components[$i] | .shared" <<< "$Pkg")
   dir=$(jq -r ".components[$i] | .dir" <<< "$Pkg")
   version=$(jq -r ".components[$i] | .version" <<< "$Pkg")
   expectedChecksum=$(jq -r ".components[$i] | .checksum" <<< "$Pkg")
@@ -83,7 +90,13 @@ for (( i = 0; i < $NumComponents; i++ )); do
   else
     (( Changed++ ))
     log "Info: Upgrading $Device/$name/$version"
-    url="$URL/$Device/$name/$version/$name.gz"
+    if [ "$shared" == "true" ]; then
+      parent="shared"
+      log "Info: $Device/$name/$version is shared"
+    else
+      parent="$Device"
+    fi
+    url="$URL/$parent/$name/$version/$name.gz"
     if [ -n "$Debug" ]; then log "Debug: Downloading $url"; fi
     tmpFile="$TmpDir/$name"
     curl -s -o "$tmpFile.gz" "$url"
@@ -119,19 +132,21 @@ for (( i = 0; i < $NumComponents; i++ )); do
   name=$(jq -r ".components[$i] | .name" <<< "$Pkg")
   dir=$(jq -r ".components[$i] | .dir" <<< "$Pkg")
   executable=$(jq -r ".components[$i] | .executable" <<< "$Pkg")
-  install=$(jq -r ".components[$i] | .install" <<< "$Pkg")
+  cmd=$(jq -r ".components[$i] | .cmd" <<< "$Pkg")
   expectedChecksum=$(jq -r ".components[$i] | .checksum" <<< "$Pkg")
   checksum=0
-  # Back up existing file, if any.
   if [ -f "$dir/$name" ]; then
     checksum=$(md5sum "$dir/$name" | cut -d ' ' -f 1)
-    mv -f "$dir/$name" "$dir/$name.bak"
-    if [ $? -ne 0 ]; then
-      log "Error: could not back up $dir/$name"
-      break
-    fi
   fi
   if [ "$checksum" != "$expectedChecksum" ]; then
+    if [ -f "$dir/$name" ]; then
+      # Back up existing file, if any.
+      mv -f "$dir/$name" "$dir/$name.bak"
+      if [ $? -ne 0 ]; then
+        log "Error: could not back up $dir/$name"
+        break
+      fi
+    fi
     # Update the file.
     cp -pf "$TmpDir/$name" "$dir/$name"
     if [ $? -ne 0 ]; then
@@ -146,13 +161,14 @@ for (( i = 0; i < $NumComponents; i++ )); do
         break
       fi
     fi
-    # Run optional install script.
-    if [ "$install" != "null" ]; then
-      install="${install//\$name/$name}"
-      install="${install//\$dir/$dir}"
-      bash -c "$install"
+    # Run optional command.
+    if [ "$cmd" != "null" ]; then
+      cmd="${cmd//\$name/$name}"
+      cmd="${cmd//\$dir/$dir}"
+      if [ -n "$Debug" ]; then log "Debug: Executing '$cmd'"; fi
+      bash -c "$cmd" > /dev/null 2>&1
       if [ $? -ne 0 ]; then
-        log "Error: could not install $dir/$name"
+        log "Error: could not execute '$cmd'"
         break
       fi
     fi
@@ -178,18 +194,27 @@ if [ "$Updated" != "$Changed" ]; then
   exit 1
 fi
 
-# Pass 3B: Remove backups.
+# Pass 3B: Successful upgrade; remove backups.
 if [ -n "$Debug" ]; then log "Debug: Removing backups"; fi
 for (( i = 0; i < $NumComponents; i++ )); do
   name=$(jq -r ".components[$i] | .name" <<< "$Pkg")
   dir=$(jq -r ".components[$i] | .dir" <<< "$Pkg")
   if [ -f "$dir/$name.bak" ]; then
-    rm "$dir/$name.bak"
+    rm -f "$dir/$name.bak"
+    if [ -n "$Debug" ]; then log "Debug: removed $dir/$name.bak"; fi
     if [ $? -ne 0 ]; then
       log "Error: could not remove $dir/$name.bak"
     fi
   fi
 done
+
+# Save a copy of the package.
+DataDir="/opt/ausocean/data"
+mkdir -p "$DataDir"
+mv -f "$PkgFile" "$DataDir"
+if [ $? -ne 0 ]; then
+  log "Warning: could not move $PkgFile"
+fi
 
 log "Info: Updated $Updated components for $Device $PkgVersion"
 exit 0
