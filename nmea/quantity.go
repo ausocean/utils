@@ -20,38 +20,67 @@ LICENSE
 package nmea
 
 // Quantity describes a NMEA quantity code.
-// For example: Quantity{Name: "Apparent Wind Speed", Code: "AWS", Type: "speed"}.
+// For example: Quantity{Name: "Apparent Wind Speed", Code: AWS, Type: "speed"}.
 type Quantity struct {
 	Name, Code, Type string
 }
 
+// Constant exports of NMEA codes.
+const (
+	ApparentWindAngle string = "AWA"
+	ApparentWindSpeed string = "AWS"
+	Audio             string = "AUD"
+	Boolean           string = "BIN"
+	Distance          string = "DIS"
+	Depth             string = "DPT"
+	GPSFix            string = "GGA"
+	DCVoltage         string = "DCV"
+	ACVoltage         string = "ACV"
+	HeadingMagnetic   string = "HDM"
+	HeadingTrue       string = "HDT"
+	Humidity          string = "MMB"
+	AirPressure       string = "MTA"
+	AirTemperature    string = "MWH"
+	WaterTemperature  string = "MTW"
+	Precipitation     string = "PPT"
+	SpeedOverGround   string = "SOG"
+	SpeedThruWater    string = "STW"
+	Turbidity         string = "TBD"
+	TrueWindAngle     string = "TWA"
+	TrueWindGust      string = "TWG"
+	TrueWindSpeed     string = "TWS"
+	WaveHeight        string = "MWS"
+	Video             string = "VID"
+	Other             string = "OTH"
+)
+
 // DefaultQuantities provides a list of common NMEA quantities we might measure.
 func DefaultQuantities() []Quantity {
 	return []Quantity{
-		{Code: "AWA", Name: "Apparent Wind Angle", Type: "angle"},
-		{Code: "AWS", Name: "Apparent Wind Speed", Type: "speed"},
-		{Code: "AUD", Name: "Audio", Type: "audio"},
-		{Code: "BIN", Name: "Boolean", Type: "bool"},
-		{Code: "DIS", Name: "Distance", Type: "length"},
-		{Code: "DPT", Name: "Depth", Type: "length"},
-		{Code: "GGA", Name: "GPS Fix", Type: "position"},
-		{Code: "DCV", Name: "DC Voltage", Type: "voltage"},
-		{Code: "ACV", Name: "AC Voltage", Type: "voltage"},
-		{Code: "HDM", Name: "Heading (Magnetic)", Type: "angle"},
-		{Code: "HDT", Name: "Heading (True)", Type: "angle"},
-		{Code: "MMB", Name: "Humidity", Type: "percent"},
-		{Code: "MTA", Name: "Air Pressure", Type: "pressure"},
-		{Code: "MWH", Name: "Air Temperature", Type: "temperature"},
-		{Code: "MTW", Name: "Water Temperature", Type: "temperature"},
-		{Code: "PPT", Name: "Precipitation", Type: "length"},
-		{Code: "SOG", Name: "Speed Over Ground", Type: "speed"},
-		{Code: "STW", Name: "Speed Thru Water", Type: "speed"},
-		{Code: "TBD", Name: "Turbidity", Type: "turbidity"},
-		{Code: "TWA", Name: "True Wind Angle", Type: "angle"},
-		{Code: "TWG", Name: "True Wind Gust", Type: "speed"},
-		{Code: "TWS", Name: "True Wind Speed", Type: "speed"},
-		{Code: "MWS", Name: "Wave Height", Type: "distance"},
-		{Code: "VID", Name: "Video", Type: "video"},
-		{Code: "OTH", Name: "Other", Type: "unknown"},
+		{Code: ApparentWindAngle, Name: "Apparent Wind Angle", Type: "angle"},
+		{Code: ApparentWindSpeed, Name: "Apparent Wind Speed", Type: "speed"},
+		{Code: Audio, Name: "Audio", Type: "audio"},
+		{Code: Boolean, Name: "Boolean", Type: "bool"},
+		{Code: Distance, Name: "Distance", Type: "length"},
+		{Code: Depth, Name: "Depth", Type: "length"},
+		{Code: GPSFix, Name: "GPS Fix", Type: "position"},
+		{Code: DCVoltage, Name: "DC Voltage", Type: "voltage"},
+		{Code: ACVoltage, Name: "AC Voltage", Type: "voltage"},
+		{Code: HeadingMagnetic, Name: "Heading (Magnetic)", Type: "angle"},
+		{Code: HeadingTrue, Name: "Heading (True)", Type: "angle"},
+		{Code: Humidity, Name: "Humidity", Type: "percent"},
+		{Code: AirPressure, Name: "Air Pressure", Type: "pressure"},
+		{Code: AirTemperature, Name: "Air Temperature", Type: "temperature"},
+		{Code: WaterTemperature, Name: "Water Temperature", Type: "temperature"},
+		{Code: Precipitation, Name: "Precipitation", Type: "length"},
+		{Code: SpeedOverGround, Name: "Speed Over Ground", Type: "speed"},
+		{Code: SpeedThruWater, Name: "Speed Thru Water", Type: "speed"},
+		{Code: Turbidity, Name: "Turbidity", Type: "turbidity"},
+		{Code: TrueWindAngle, Name: "True Wind Angle", Type: "angle"},
+		{Code: TrueWindGust, Name: "True Wind Gust", Type: "speed"},
+		{Code: TrueWindSpeed, Name: "True Wind Speed", Type: "speed"},
+		{Code: WaveHeight, Name: "Wave Height", Type: "distance"},
+		{Code: Video, Name: "Video", Type: "video"},
+		{Code: Other, Name: "Other", Type: "unknown"},
 	}
 }
