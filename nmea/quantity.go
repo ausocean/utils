@@ -19,68 +19,93 @@ LICENSE
 // Package nmea defines some common NMEA functions.
 package nmea
 
+// Code represents an NMEA code.
+type Code string
+
+// Type represents the type of value in an NMEA Quantity.
+type Type string
+
 // Quantity describes a NMEA quantity code.
-// For example: Quantity{Name: "Apparent Wind Speed", Code: AWS, Type: "speed"}.
+// For example: Quantity{Name: "Apparent Wind Speed", Code: "AWS", Type: "speed"}.
 type Quantity struct {
-	Name, Code, Type string
+	Name string
+	Code Code
+	Type Type
 }
 
 // Constant exports of NMEA codes.
 const (
-	ApparentWindAngle string = "AWA"
-	ApparentWindSpeed string = "AWS"
-	Audio             string = "AUD"
-	Boolean           string = "BIN"
-	Distance          string = "DIS"
-	Depth             string = "DPT"
-	GPSFix            string = "GGA"
-	DCVoltage         string = "DCV"
-	ACVoltage         string = "ACV"
-	HeadingMagnetic   string = "HDM"
-	HeadingTrue       string = "HDT"
-	Humidity          string = "MMB"
-	AirPressure       string = "MTA"
-	AirTemperature    string = "MWH"
-	WaterTemperature  string = "MTW"
-	Precipitation     string = "PPT"
-	SpeedOverGround   string = "SOG"
-	SpeedThruWater    string = "STW"
-	Turbidity         string = "TBD"
-	TrueWindAngle     string = "TWA"
-	TrueWindGust      string = "TWG"
-	TrueWindSpeed     string = "TWS"
-	WaveHeight        string = "MWS"
-	Video             string = "VID"
-	Other             string = "OTH"
+	ApparentWindAngle Code = "AWA"
+	ApparentWindSpeed Code = "AWS"
+	Audio             Code = "AUD"
+	Boolean           Code = "BIN"
+	Distance          Code = "DIS"
+	Depth             Code = "DPT"
+	GPSFix            Code = "GGA"
+	DCVoltage         Code = "DCV"
+	ACVoltage         Code = "ACV"
+	HeadingMagnetic   Code = "HDM"
+	HeadingTrue       Code = "HDT"
+	Humidity          Code = "MMB"
+	AirPressure       Code = "MTA"
+	AirTemperature    Code = "MWH"
+	WaterTemperature  Code = "MTW"
+	Precipitation     Code = "PPT"
+	SpeedOverGround   Code = "SOG"
+	SpeedThruWater    Code = "STW"
+	Turbidity         Code = "TBD"
+	TrueWindAngle     Code = "TWA"
+	TrueWindGust      Code = "TWG"
+	TrueWindSpeed     Code = "TWS"
+	WaveHeight        Code = "MWS"
+	Video             Code = "VID"
+	Other             Code = "OTH"
+)
+
+// Constant exports of NMEA types.
+const (
+	TypeAngle       Type = "angle"
+	TypeSpeed       Type = "Speed"
+	TypeAudio       Type = "audio"
+	TypeBool        Type = "bool"
+	TypeLength      Type = "length"
+	TypePosition    Type = "position"
+	TypeVoltage     Type = "voltage"
+	TypePercent     Type = "percent"
+	TypePressure    Type = "pressure"
+	TypeTemperature Type = "temperature"
+	TypeDistance    Type = "distance"
+	TypeVideo       Type = "video"
+	TypeUnknown     Type = "unknown"
 )
 
 // DefaultQuantities provides a list of common NMEA quantities we might measure.
 func DefaultQuantities() []Quantity {
 	return []Quantity{
-		{Code: ApparentWindAngle, Name: "Apparent Wind Angle", Type: "angle"},
-		{Code: ApparentWindSpeed, Name: "Apparent Wind Speed", Type: "speed"},
-		{Code: Audio, Name: "Audio", Type: "audio"},
-		{Code: Boolean, Name: "Boolean", Type: "bool"},
-		{Code: Distance, Name: "Distance", Type: "length"},
-		{Code: Depth, Name: "Depth", Type: "length"},
-		{Code: GPSFix, Name: "GPS Fix", Type: "position"},
-		{Code: DCVoltage, Name: "DC Voltage", Type: "voltage"},
-		{Code: ACVoltage, Name: "AC Voltage", Type: "voltage"},
-		{Code: HeadingMagnetic, Name: "Heading (Magnetic)", Type: "angle"},
-		{Code: HeadingTrue, Name: "Heading (True)", Type: "angle"},
-		{Code: Humidity, Name: "Humidity", Type: "percent"},
-		{Code: AirPressure, Name: "Air Pressure", Type: "pressure"},
-		{Code: AirTemperature, Name: "Air Temperature", Type: "temperature"},
-		{Code: WaterTemperature, Name: "Water Temperature", Type: "temperature"},
-		{Code: Precipitation, Name: "Precipitation", Type: "length"},
-		{Code: SpeedOverGround, Name: "Speed Over Ground", Type: "speed"},
-		{Code: SpeedThruWater, Name: "Speed Thru Water", Type: "speed"},
+		{Code: ApparentWindAngle, Name: "Apparent Wind Angle", Type: TypeAngle},
+		{Code: ApparentWindSpeed, Name: "Apparent Wind Speed", Type: TypeSpeed},
+		{Code: Audio, Name: "Audio", Type: TypeAudio},
+		{Code: Boolean, Name: "Boolean", Type: TypeBool},
+		{Code: Distance, Name: "Distance", Type: TypeLength},
+		{Code: Depth, Name: "Depth", Type: TypeLength},
+		{Code: GPSFix, Name: "GPS Fix", Type: TypePosition},
+		{Code: DCVoltage, Name: "DC Voltage", Type: TypeVoltage},
+		{Code: ACVoltage, Name: "AC Voltage", Type: TypeVoltage},
+		{Code: HeadingMagnetic, Name: "Heading (Magnetic)", Type: TypeAngle},
+		{Code: HeadingTrue, Name: "Heading (True)", Type: TypeAngle},
+		{Code: Humidity, Name: "Humidity", Type: TypePercent},
+		{Code: AirPressure, Name: "Air Pressure", Type: TypePressure},
+		{Code: AirTemperature, Name: "Air Temperature", Type: TypeTemperature},
+		{Code: WaterTemperature, Name: "Water Temperature", Type: TypeTemperature},
+		{Code: Precipitation, Name: "Precipitation", Type: TypeLength},
+		{Code: SpeedOverGround, Name: "Speed Over Ground", Type: TypeSpeed},
+		{Code: SpeedThruWater, Name: "Speed Thru Water", Type: TypeSpeed},
 		{Code: Turbidity, Name: "Turbidity", Type: "turbidity"},
-		{Code: TrueWindAngle, Name: "True Wind Angle", Type: "angle"},
-		{Code: TrueWindGust, Name: "True Wind Gust", Type: "speed"},
-		{Code: TrueWindSpeed, Name: "True Wind Speed", Type: "speed"},
-		{Code: WaveHeight, Name: "Wave Height", Type: "distance"},
-		{Code: Video, Name: "Video", Type: "video"},
-		{Code: Other, Name: "Other", Type: "unknown"},
+		{Code: TrueWindAngle, Name: "True Wind Angle", Type: TypeAngle},
+		{Code: TrueWindGust, Name: "True Wind Gust", Type: TypeSpeed},
+		{Code: TrueWindSpeed, Name: "True Wind Speed", Type: TypeSpeed},
+		{Code: WaveHeight, Name: "Wave Height", Type: TypeDistance},
+		{Code: Video, Name: "Video", Type: TypeVideo},
+		{Code: Other, Name: "Other", Type: TypeUnknown},
 	}
 }
