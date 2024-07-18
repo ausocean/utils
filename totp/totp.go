@@ -16,6 +16,7 @@ package totp
 import (
 	"crypto/hmac"
 	"crypto/sha256"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -49,4 +50,22 @@ func GenerateTOTP(t time.Time, digits int, secret []byte) (string, error) {
 		nonce[i] = strconv.Itoa((int(hashed[2*i]) + int(hashed[2*i+1])) % 10)
 	}
 	return strings.Join(nonce, ""), nil
+}
+
+// CheckTOTP returns true if the supplied string is a TOTP of the
+// specified number of digits that has been generated between t and
+// t-period, or false otherwise. It is recommended to use a period of
+// at least one minute.
+func CheckTOTP(s string, t time.Time, period time.Duration, digits int, secret []byte) (bool, error) {
+	from := t.Add(-period)
+	for ; t.After(from) || t.Equal(from); t = t.Add(-time.Minute) {
+		p, err := GenerateTOTP(t, digits, secret)
+		if err != nil {
+			return false, fmt.Errorf("could not get generate TOTP: %w", err)
+		}
+		if p == s {
+			return true, nil
+		}
+	}
+	return false, nil
 }
