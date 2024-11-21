@@ -3,7 +3,7 @@ AUTHORS
   Saxon Nelson-Milton <saxon@ausocean.org>
 
 LICENSE
-  Copyright (C) 2020 the Australian Ocean Lab (AusOcean)
+  Copyright (C) 2020-2024 the Australian Ocean Lab (AusOcean)
 
   It is free software: you can redistribute it and/or modify them
   under the terms of the GNU General Public License as published by the
@@ -33,16 +33,21 @@ LICENSE
 #define LED_PIN 13
 
 // Pressures.
-#define MAX_PRESSURE 150 //kPa
+#define MAX_PRESSURE 200 //kPa
 #define RANGE 30 // kPa
 #define MIN_PRESSURE MAX_PRESSURE - RANGE
 #define ABS_MAX_PRESSURE 300 // kPa
 
 // Max pump running time.
-#define MAX_PUMP_TIME 0.5 // Minutes
+#define MAX_PUMP_TIME 2 // Minutes
 
 // Misc consts.
 #define NO_OF_READINGS 500
+
+// Forward declations
+int median(byte*, unsigned int);
+void bubbleSort(byte*, int);
+int adjust(float);
 
 // This will put arduino into an alarm state i.e. something
 // went wrong.
@@ -113,7 +118,7 @@ void bubbleSort(byte arr[], int n){
 
 bool pumpOn = false;
 float zero = 0;
-float startPumpTime = 0;
+unsigned long startPumpTime = 0;
 
 void setup() {
   pinMode(RELAY_PIN,OUTPUT);
@@ -129,8 +134,14 @@ void startPumpTimer(){
   startPumpTime = millis();
 }
 
+// getPumpTime returns the pump time in minutes.
 float getPumpTime(){
-  return (float(millis())-startPumpTime)/(1000.0*60.0);
+  unsigned long now = millis();
+  if (now < startPumpTime) {
+    startPumpTime = 0;
+    Serial.println("Time rolled over!");
+  }
+  return float(now-startPumpTime)/(1000.0*60.0);
 }
 
 int adjust(float p){
