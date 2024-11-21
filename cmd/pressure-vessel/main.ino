@@ -41,6 +41,12 @@ LICENSE
 // Max pump running time.
 #define MAX_PUMP_TIME 2 // Minutes
 
+// Alarm consts.
+#define MAX_PUMP_TIME_ALARM 1
+#define ABS_MAX_PRESSURE_ALARM 2
+#define ALARM_PULSE 1000  // milliseconds
+#define ALARM_PERIOD 5000 // milliseconds
+
 // Misc consts.
 #define NO_OF_READINGS 500
 
@@ -49,18 +55,27 @@ int median(byte*, unsigned int);
 void bubbleSort(byte*, int);
 int adjust(float);
 
+// flashes produce n flashes of p millisecond pulse period
+void flash(int n, int p) {
+  while (n > 0) {
+    digitalWrite(LED_PIN,HIGH);
+    delay(p/2);
+    digitalWrite(LED_PIN,LOW);
+    delay(p/2);
+    n--;
+  }
+}
+
 // This will put arduino into an alarm state i.e. something
 // went wrong.
-void alarmed(){
+void alarmed(int flashes){
   // Again force relay pin low, we don't want pump on.
   digitalWrite(RELAY_PIN,LOW);
 
   // Now flash LED to warn of alarm state.
   while(true){
-    digitalWrite(LED_PIN,HIGH);
-    delay(500);
-    digitalWrite(LED_PIN,LOW);
-    delay(500);
+    flash(flashes, ALARM_PULSE);
+    delay(ALARM_PERIOD - (flashes*ALARM_PULSE));
   }
 }
 
@@ -170,13 +185,13 @@ void loop() {
 
     if( pumpTime > MAX_PUMP_TIME ){
       Serial.println("Pump has been running too long! Alarmed!");
-      alarmed();
+      alarmed(MAX_PUMP_TIME_ALARM);
     }
   }
 
   if( pressure > ABS_MAX_PRESSURE ){
     Serial.println("Pressure too high! Alarmed!");
-    alarmed();
+    alarmed(ABS_MAX_PRESSURE_ALARM);
   }
 
   // If the pump is on and we're above max pressure, then turn it off.
