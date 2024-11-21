@@ -3,7 +3,7 @@ AUTHORS
   Saxon Nelson-Milton <saxon@ausocean.org>
 
 LICENSE
-  Copyright (C) 2020 the Australian Ocean Lab (AusOcean)
+  Copyright (C) 2020-2024 the Australian Ocean Lab (AusOcean)
 
   It is free software: you can redistribute it and/or modify them
   under the terms of the GNU General Public License as published by the
@@ -18,6 +18,8 @@ LICENSE
   You should have received a copy of the GNU General Public License
   in gpl.txt.  If not, see http://www.gnu.org/licenses.
 */
+
+#include "nonarduino.h"
 
 // Display pins.
 #define MAX7219DIN 3
@@ -43,6 +45,11 @@ LICENSE
 
 // Misc consts.
 #define NO_OF_READINGS 500
+
+// Forward declations
+int median(byte*, unsigned int);
+void bubbleSort(byte*, int);
+int adjust(float);
 
 // This will put arduino into an alarm state i.e. something
 // went wrong.
@@ -113,7 +120,7 @@ void bubbleSort(byte arr[], int n){
 
 bool pumpOn = false;
 float zero = 0;
-float startPumpTime = 0;
+unsigned long startPumpTime = 0;
 
 void setup() {
   pinMode(RELAY_PIN,OUTPUT);
@@ -129,8 +136,14 @@ void startPumpTimer(){
   startPumpTime = millis();
 }
 
+// getPumpTime returns the pump time in minutes.
 float getPumpTime(){
-  return (float(millis())-startPumpTime)/(1000.0*60.0);
+  unsigned long now = millis();
+  if (now < startPumpTime) {
+    startPumpTime = 0;
+    Serial.println("Time rolled over!");
+  }
+  return float(now-startPumpTime)/(1000.0*60.0);
 }
 
 int adjust(float p){
