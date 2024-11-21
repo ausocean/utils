@@ -33,13 +33,13 @@ LICENSE
 #define LED_PIN 13
 
 // Pressures.
-#define MAX_PRESSURE 150 //kPa
+#define MAX_PRESSURE 200 //kPa
 #define RANGE 30 // kPa
 #define MIN_PRESSURE MAX_PRESSURE - RANGE
 #define ABS_MAX_PRESSURE 300 // kPa
 
 // Max pump running time.
-#define MAX_PUMP_TIME 0.5 // Minutes
+#define MAX_PUMP_TIME 2 // Minutes
 
 // Misc consts.
 #define NO_OF_READINGS 500
