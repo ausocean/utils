@@ -19,8 +19,6 @@ LICENSE
   in gpl.txt.  If not, see http://www.gnu.org/licenses.
 */
 
-#include "nonarduino.h"
-
 // Display pins.
 #define MAX7219DIN 3
 #define MAX7219CS 4
