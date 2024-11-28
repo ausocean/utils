@@ -170,23 +170,24 @@ void loop() {
   // Get pressure from pressure sensor.
   float pressure = read_pressure();
 
-  // Print pressure to serial monitor.
-  Serial.println("Pressure (kPa):");
-  Serial.println(pressure);
-
   // Print pressure to display.
   MAX7219shownum(int(pressure));
 
+  float pumpTime = 0;
   if( pumpOn ){
-    float pumpTime = getPumpTime();
+    pumpTime = getPumpTime();
+  }
 
-    Serial.println("Pump time (minutes)");
-    Serial.println(pumpTime);
+  Serial.print("Up time (minutes): ");
+  Serial.println(millis()/1000/60);
+  Serial.print("Pump time (minutes): ");
+  Serial.println(pumpTime);
+  Serial.print("Pressure (kPa): ");
+  Serial.println(pressure);
 
-    if( pumpTime > MAX_PUMP_TIME ){
-      Serial.println("Pump has been running too long! Alarmed!");
-      alarmed(MAX_PUMP_TIME_ALARM);
-    }
+  if( pumpTime > MAX_PUMP_TIME ){
+    Serial.println("Pump has been running too long! Alarmed!");
+    alarmed(MAX_PUMP_TIME_ALARM);
   }
 
   if( pressure > ABS_MAX_PRESSURE ){
