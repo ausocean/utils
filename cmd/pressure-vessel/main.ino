@@ -49,7 +49,7 @@ LICENSE
 
 // Misc consts.
 #define NO_OF_READINGS 500
-#define RELAY_DELAY 1000 // millseconds
+#define RELAY_DELAY 1000 // milliseconds
 
 // Forward declations
 int median(byte*, unsigned int);
