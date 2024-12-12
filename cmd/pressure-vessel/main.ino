@@ -49,11 +49,18 @@ LICENSE
 
 // Misc consts.
 #define NO_OF_READINGS 500
+#define RELAY_DELAY 1000 // millseconds
 
 // Forward declations
 int median(byte*, unsigned int);
 void bubbleSort(byte*, int);
 int adjust(float);
+
+// relay controls the relay with a delay.
+void relay(int level) {
+  digitalWrite(RELAY_PIN, level);
+  delay(RELAY_DELAY);
+}
 
 // flashes produce n flashes of p millisecond pulse period
 void flash(int n, int p) {
@@ -70,7 +77,7 @@ void flash(int n, int p) {
 // went wrong.
 void alarmed(int flashes){
   // Again force relay pin low, we don't want pump on.
-  digitalWrite(RELAY_PIN,LOW);
+  relay(LOW);
 
   // Now flash LED to warn of alarm state.
   while(true){
@@ -197,14 +204,14 @@ void loop() {
 
   // If the pump is on and we're above max pressure, then turn it off.
   if( pumpOn && pressure > MAX_PRESSURE ){
-    digitalWrite(RELAY_PIN,LOW);
+    relay(LOW);
     pumpOn = false;
     MAX7219init();
   }
 
   // If pump is off but below min pressure, turn it on.
   if( !pumpOn && pressure < MIN_PRESSURE ){
-    digitalWrite(RELAY_PIN,HIGH);
+    relay(HIGH);
     pumpOn = true;
     startPumpTimer();
     MAX7219init();
