@@ -150,6 +150,8 @@ void setup() {
   MAX7219brightness(DISPLAY_BRIGHTNESS);
 
   Serial.begin(9600);
+
+  delay(3000);
 }
 
 void startPumpTimer(){
