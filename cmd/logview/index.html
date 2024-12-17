@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log Stream</title>
+    <!-- <style>
+        body { font-family: monospace; background-color: #000; color: #0F0; padding: 10px; }
+        pre { white-space: pre-wrap; word-wrap: break-word; }
+    </style> -->
+    <style>
+        /* Style for the log container */
+        #log {
+            font-size: 12px;  /* Adjust the font size as needed */
+            white-space: pre-wrap;  /* Preserve line breaks from the backend */
+            word-wrap: break-word;  /* Handle long words gracefully */
+            padding: 10px;
+            max-height: 800px;
+            overflow-y: auto;  /* Add scroll if the logs exceed the container size */
+            background-color: #f4f4f4;  /* Light background for readability */
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Live Log Stream</h2>
+    <pre id="log"></pre>
+
+    <script>
+        const logElement = document.getElementById('log');
+
+        // Function to stream logs using fetch and TextDecoder
+        const streamLogs = async () => {
+            try {
+                const response = await fetch('/logs');  // Fetch the stream
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+
+                    const logLines = decoder.decode(value);  // Decode the stream
+                    logElement.textContent += logLines;      // Append logs
+                }
+            } catch (error) {
+                console.error("Error while streaming logs:", error);
+            }
+        };
+
+        // Start streaming logs
+        streamLogs();
+    </script>
+</body>
+</html>
