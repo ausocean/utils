@@ -24,7 +24,7 @@
             font-family: "Courier New", Courier, monospace;
             white-space: pre-wrap; /* Preserve formatting */
             overflow-y: auto; /* Scroll only when needed */
-            max-height: 80vh; /* Avoid taking full page height */
+            max-height: 95vh; /* Avoid taking full page height */
             border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
             font-size: 11px;
@@ -64,6 +64,18 @@
             color: #b3e5fc; /* Light blue for request/reply fields */
             font-style: italic;
             margin-left: 20px;
+        }
+
+        .log-error-text {
+            display: inline-block;
+            margin-left: 10px;
+            color: #ff4081; /* Pink/red color for errors */
+            font-size: 0.9em;
+            font-style: italic;
+            max-width: 600px; /* Limit the width of the error text */
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .log-details {
@@ -132,10 +144,21 @@
                             extraFieldElement.textContent = `→ ${extraField}`;
                         }
 
+                        // Add error text for "warn" or "error" level logs
+                        let errorText = "";
+                        if ((severity === "warn" || severity === "error") && logData.error) {
+                            errorText = logData.error;
+                        }
+
+                        const errorTextElement = document.createElement("div");
+                        errorTextElement.className = "log-error-text";
+                        errorTextElement.textContent = errorText.length > 150 ? errorText.substring(0, 150) + "..." : errorText; // Truncate if too long
+                        
                         logRow.appendChild(iconElement);
                         logRow.appendChild(timeElement);
                         logRow.appendChild(messageElement);
                         if (extraField) logRow.appendChild(extraFieldElement);
+                        if (errorText) logRow.appendChild(errorTextElement);  // Add the error text directly in the row
 
                         // Expandable details
                         const details = document.createElement("div");
