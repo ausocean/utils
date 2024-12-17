@@ -4,81 +4,161 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Log Stream</title>
-    <!-- <style>
-        body { font-family: monospace; background-color: #000; color: #0F0; padding: 10px; }
-        pre { white-space: pre-wrap; word-wrap: break-word; }
-    </style> -->
     <style>
-        /* Style for the log container */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f7f7f7;
+            color: #333;
+        }
+        
+        /* General styles */
         #log {
-            font-size: 12px;  /* Adjust the font size as needed */
-            white-space: pre-wrap;  /* Preserve line breaks from the backend */
-            word-wrap: break-word;  /* Handle long words gracefully */
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
             padding: 10px;
-            max-height: 800px;
-            overflow-y: auto;  /* Add scroll if the logs exceed the container size */
-            background-color: #f4f4f4;  /* Light background for readability */
-            border: 1px solid #ccc;
+            background-color: #222; /* Darker background */
+            color: #ddd; /* Light text */
+            font-family: "Courier New", Courier, monospace;
+            white-space: pre-wrap; /* Preserve formatting */
+            overflow-y: auto; /* Scroll only when needed */
+            max-height: 80vh; /* Avoid taking full page height */
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            font-size: 11px;
+        }
+
+        .log-row {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 0px 10px;
+            border-bottom: 1px solid #333;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .log-row:hover {
+            background-color: #333;
+        }
+
+        .severity-icon {
+            margin-right: 10px;
+            font-size: 1.2em; /* Slightly larger for emphasis */
+        }
+
+        .time {
+            color: #aaa;
+            margin-right: 20px;
+            white-space: nowrap;
+        }
+
+        .message {
+            flex-grow: 1;
+            color: #fff;
+        }
+
+        .extra-field {
+            color: #b3e5fc; /* Light blue for request/reply fields */
+            font-style: italic;
+            margin-left: 20px;
+        }
+
+        .log-details {
+            background-color: #333;
+            color: #ccc;
+            padding: 10px;
+            margin-top: 5px;
+            font-size: 0.9em;
+            white-space: pre-wrap;
             border-radius: 5px;
         }
+
     </style>
 </head>
 <body>
-    <h2>Live Log Stream</h2>
-    <pre id="log"></pre>
+    <div id="log"></div>
 
     <script>
-        const logElement = document.getElementById('log');
-    
-        // Function to stream logs and format JSON
         const streamLogs = async () => {
-            try {
-                const response = await fetch('/logs');  // Fetch the stream
-                const reader = response.body.getReader();
-                const decoder = new TextDecoder();
-    
-                while (true) {
-                    const { value, done } = await reader.read();
-                    if (done) break;
-    
-                    const logLines = decoder.decode(value); // Decode the stream chunk
-                    const lines = logLines.trim().split('\n'); // Split into individual lines
-    
-                    lines.forEach((line) => {
-                        if (line) {
-                            try {
-                                const parsedLog = JSON.parse(line); // Parse JSON
-                                const formattedLog = JSON.stringify(parsedLog, null, 2); // Prettify JSON
-                                appendLog(formattedLog);
-                            } catch (err) {
-                                console.warn("Non-JSON log line:", line);
-                                appendLog(line); // Show non-JSON lines as-is
-                            }
+            const logElement = document.getElementById("log");
+            const severityIcons = {
+                debug: "⚪",  // White circle
+                info: "🔵",   // Blue circle
+                warn: "🟠",   // Orange circle
+                error: "🔴"   // Red circle
+            };
+
+            const response = await fetch("/logs");
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) break;
+
+                const lines = decoder.decode(value).split("\n");
+                lines.forEach(line => {
+                    if (!line.trim()) return; // Skip empty lines
+                    try {
+                        const logData = JSON.parse(line);
+
+                        const logRow = document.createElement("div");
+                        logRow.className = "log-row";
+
+                        // Add severity indicator
+                        const severity = logData.level || "debug";
+                        const icon = severityIcons[severity] || "⚪";
+
+                        const iconElement = document.createElement("span");
+                        iconElement.className = "severity-icon";
+                        iconElement.textContent = icon;
+                        iconElement.title = severity.toUpperCase(); // Tooltip text for the level.
+
+                        const timeElement = document.createElement("div");
+                        timeElement.className = "time";
+                        timeElement.textContent = new Date(logData.time).toLocaleString();
+
+                        const messageElement = document.createElement("div");
+                        messageElement.className = "message";
+                        messageElement.textContent = logData.message;
+
+                        const extraFieldElement = document.createElement("div");
+                        extraFieldElement.className = "extra-field";
+                        const extraField = logData.request || logData.reply || "";
+                        if (extraField) {
+                            extraFieldElement.textContent = `→ ${extraField}`;
                         }
-                    });
-                }
-            } catch (error) {
-                console.error("Error while streaming logs:", error);
+
+                        logRow.appendChild(iconElement);
+                        logRow.appendChild(timeElement);
+                        logRow.appendChild(messageElement);
+                        if (extraField) logRow.appendChild(extraFieldElement);
+
+                        // Expandable details
+                        const details = document.createElement("div");
+                        details.className = "log-details";
+                        details.style.display = "none";
+                        details.textContent = JSON.stringify(logData, null, 2);
+
+                        logRow.addEventListener("click", () => {
+                            details.style.display = details.style.display === "none" ? "block" : "none";
+                        });
+
+                        logElement.appendChild(logRow);
+                        logElement.appendChild(details);
+                        logElement.scrollTop = logElement.scrollHeight; // Auto-scroll
+                    } catch (error) {
+                        console.error("Error parsing log data:", error);
+                    }
+                });
             }
         };
-    
-        // Helper function to append log data to the log element
-        const appendLog = (log) => {
-            const pre = document.createElement('pre'); // Use <pre> for better formatting
-            pre.textContent = log;
-            pre.style.margin = '10px 0'; // Add spacing between logs
-            pre.style.fontSize = '0.9em'; // Slightly smaller font size for readability
-            pre.style.whiteSpace = 'pre-wrap'; // Wrap long lines
-            pre.style.backgroundColor = '#f4f4f4'; // Light gray background for better visibility
-            pre.style.padding = '8px';
-            pre.style.borderRadius = '4px';
-            logElement.appendChild(pre);
-            logElement.scrollTop = logElement.scrollHeight; // Auto-scroll to the latest log
-        };
-    
-        // Start streaming logs
+
+
         streamLogs();
     </script>
-    
 </body>
 </html>
