@@ -29,28 +29,56 @@
 
     <script>
         const logElement = document.getElementById('log');
-
-        // Function to stream logs using fetch and TextDecoder
+    
+        // Function to stream logs and format JSON
         const streamLogs = async () => {
             try {
                 const response = await fetch('/logs');  // Fetch the stream
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
-
+    
                 while (true) {
                     const { value, done } = await reader.read();
                     if (done) break;
-
-                    const logLines = decoder.decode(value);  // Decode the stream
-                    logElement.textContent += logLines;      // Append logs
+    
+                    const logLines = decoder.decode(value); // Decode the stream chunk
+                    const lines = logLines.trim().split('\n'); // Split into individual lines
+    
+                    lines.forEach((line) => {
+                        if (line) {
+                            try {
+                                const parsedLog = JSON.parse(line); // Parse JSON
+                                const formattedLog = JSON.stringify(parsedLog, null, 2); // Prettify JSON
+                                appendLog(formattedLog);
+                            } catch (err) {
+                                console.warn("Non-JSON log line:", line);
+                                appendLog(line); // Show non-JSON lines as-is
+                            }
+                        }
+                    });
                 }
             } catch (error) {
                 console.error("Error while streaming logs:", error);
             }
         };
-
+    
+        // Helper function to append log data to the log element
+        const appendLog = (log) => {
+            const pre = document.createElement('pre'); // Use <pre> for better formatting
+            pre.textContent = log;
+            pre.style.margin = '10px 0'; // Add spacing between logs
+            pre.style.fontSize = '0.9em'; // Slightly smaller font size for readability
+            pre.style.whiteSpace = 'pre-wrap'; // Wrap long lines
+            pre.style.backgroundColor = '#f4f4f4'; // Light gray background for better visibility
+            pre.style.padding = '8px';
+            pre.style.borderRadius = '4px';
+            logElement.appendChild(pre);
+            logElement.scrollTop = logElement.scrollHeight; // Auto-scroll to the latest log
+        };
+    
         // Start streaming logs
         streamLogs();
     </script>
+    
 </body>
 </html>
