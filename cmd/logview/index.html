@@ -64,6 +64,7 @@
             color: #b3e5fc; /* Light blue for request/reply fields */
             font-style: italic;
             margin-left: 20px;
+            max-width: 600px;
         }
 
         .log-error-text {
@@ -153,12 +154,21 @@
                         const errorTextElement = document.createElement("div");
                         errorTextElement.className = "log-error-text";
                         errorTextElement.textContent = errorText.length > 150 ? errorText.substring(0, 150) + "..." : errorText; // Truncate if too long
+
+                        // Add size if it exists
+                        const sizeElement = document.createElement("div");
+                        sizeElement.className = "extra-field";
+                        const size = logData.size || "";
+                        if (size) {
+                            sizeElement.textContent = `Size: ${size}`;
+                        }
                         
                         logRow.appendChild(iconElement);
                         logRow.appendChild(timeElement);
                         logRow.appendChild(messageElement);
                         if (extraField) logRow.appendChild(extraFieldElement);
                         if (errorText) logRow.appendChild(errorTextElement);  // Add the error text directly in the row
+                        if (size) logRow.appendChild(sizeElement);
 
                         // Expandable details
                         const details = document.createElement("div");
