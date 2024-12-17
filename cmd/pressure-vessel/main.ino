@@ -73,18 +73,43 @@ void flash(int n, int p) {
   }
 }
 
+bool pumpOn = false;
+unsigned long startPumpTime = 0;
+int alarmCount = 0; // Global to track alarm state entries.
+
 // This will put arduino into an alarm state i.e. something
 // went wrong.
-void alarmed(int flashes){
-  // Again force relay pin low, we don't want pump on.
-  relay(LOW);
+void alarmed(int flashes) {
+  unsigned long alarmStartTime = millis();
+  alarmCount++; // Increment the alarm state counter.
+  
+  // Log that the system has entered the alarm state.
+  Serial.print("Entering alarm state. Count: ");
+  Serial.println(alarmCount);
 
-  // Now flash LED to warn of alarm state.
-  while(true){
+  // Ensure pump is off for safety.
+  relay(LOW);
+  pumpOn = false;
+
+  // Stay in alarm state until timeout AND pressure is below MAX_PRESSURE.
+  while (true) {
     flash(flashes, ALARM_PULSE);
-    delay(ALARM_PERIOD - (flashes*ALARM_PULSE));
+    delay(ALARM_PERIOD - (flashes * ALARM_PULSE));
+
+    float currentPressure = read_pressure();
+
+    // Check for timeout AND safe pressure.
+    if ((millis() - alarmStartTime > 30000) && (currentPressure < MAX_PRESSURE)) {
+      Serial.println("Pressure below MAX_PRESSURE. Exiting alarm state after timeout.");
+      break;
+    }
+
+    // Log current pressure.
+    Serial.print("Current pressure (kPa): ");
+    Serial.println(currentPressure);
   }
 }
+
 
 float v_to_kPa(float v){
   float p = (((1600.0-0.0)/(4.5-0.5))*v)-(((1600.0-0.0)/(4.5-0.5))*0.5);
@@ -138,10 +163,6 @@ void bubbleSort(byte arr[], int n){
    }
 }
 
-bool pumpOn = false;
-float zero = 0;
-unsigned long startPumpTime = 0;
-
 void setup() {
   pinMode(RELAY_PIN,OUTPUT);
   pinMode(LED_PIN,OUTPUT);
@@ -150,6 +171,13 @@ void setup() {
   MAX7219brightness(DISPLAY_BRIGHTNESS);
 
   Serial.begin(9600);
+  
+  // Discard initial readings
+  for (int i = 0; i < 10; i++) {
+    float reading = read_pressure(); // Or whatever function gives you the pressure reading
+    Serial.print("Discarding initial reading: ");
+    Serial.println(reading);
+  }
 }
 
 void startPumpTimer(){
