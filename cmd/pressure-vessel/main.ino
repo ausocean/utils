@@ -1,6 +1,8 @@
 /*
 AUTHORS
   Saxon Nelson-Milton <saxon@ausocean.org>
+  Alan Noble <alan@ausocean.org>
+  Trek Hopton <trek@ausocean.org>
 
 LICENSE
   Copyright (C) 2020-2024 the Australian Ocean Lab (AusOcean)
@@ -73,18 +75,77 @@ void flash(int n, int p) {
   }
 }
 
-// This will put arduino into an alarm state i.e. something
-// went wrong.
-void alarmed(int flashes){
-  // Again force relay pin low, we don't want pump on.
-  relay(LOW);
+unsigned long startPumpTime = 0; // Global to track pump start time.
+void startPumpTimer(){
+  startPumpTime = millis();
+}
 
-  // Now flash LED to warn of alarm state.
-  while(true){
-    flash(flashes, ALARM_PULSE);
-    delay(ALARM_PERIOD - (flashes*ALARM_PULSE));
+// getPumpTime returns the pump time in minutes.
+float getPumpTime(){
+  unsigned long now = millis();
+  if (now < startPumpTime) {
+    startPumpTime = 0;
+    Serial.println("Time rolled over!");
+  }
+  return float(now-startPumpTime)/(1000.0*60.0);
+}
+
+int adjust(float p){
+  if( p < 0 ){
+    return 0;
+  }
+  return int(p);
+}
+
+bool pumpOn = false; // Glbal to track pump state.
+int alarmCount = 0; // Global to track alarm state entries.
+
+void setPumpState(bool state) {
+  if (state) {
+    relay(HIGH);
+    pumpOn = true;
+    startPumpTimer();
+    Serial.println("Pump turned ON.");
+  } else {
+    relay(LOW);
+    pumpOn = false;
+    Serial.println("Pump turned OFF.");
   }
 }
+
+
+// This will put arduino into an alarm state i.e. something
+// went wrong.
+void alarmed(int flashes) {
+  unsigned long alarmStartTime = millis();
+  alarmCount++; // Increment the alarm state counter.
+  
+  // Log that the system has entered the alarm state.
+  Serial.print("Entering alarm state. Count: ");
+  Serial.println(alarmCount);
+
+  // Ensure pump is off for safety.
+  setPumpState(false);
+
+  // Stay in alarm state until timeout AND pressure is below MAX_PRESSURE.
+  while (true) {
+    flash(flashes, ALARM_PULSE);
+    delay(ALARM_PERIOD - (flashes * ALARM_PULSE));
+
+    float currentPressure = read_pressure();
+
+    // Check for timeout AND safe pressure.
+    if ((millis() - alarmStartTime > 30000) && (currentPressure < MAX_PRESSURE)) {
+      Serial.println("Pressure below MAX_PRESSURE. Exiting alarm state after timeout.");
+      break;
+    }
+
+    // Log current pressure.
+    Serial.print("Current pressure (kPa): ");
+    Serial.println(currentPressure);
+  }
+}
+
 
 float v_to_kPa(float v){
   float p = (((1600.0-0.0)/(4.5-0.5))*v)-(((1600.0-0.0)/(4.5-0.5))*0.5);
@@ -138,10 +199,6 @@ void bubbleSort(byte arr[], int n){
    }
 }
 
-bool pumpOn = false;
-float zero = 0;
-unsigned long startPumpTime = 0;
-
 void setup() {
   pinMode(RELAY_PIN,OUTPUT);
   pinMode(LED_PIN,OUTPUT);
@@ -150,27 +207,13 @@ void setup() {
   MAX7219brightness(DISPLAY_BRIGHTNESS);
 
   Serial.begin(9600);
-}
-
-void startPumpTimer(){
-  startPumpTime = millis();
-}
-
-// getPumpTime returns the pump time in minutes.
-float getPumpTime(){
-  unsigned long now = millis();
-  if (now < startPumpTime) {
-    startPumpTime = 0;
-    Serial.println("Time rolled over!");
+  
+  // Discard initial readings
+  for (int i = 0; i < 10; i++) {
+    float reading = read_pressure(); // Or whatever function gives you the pressure reading
+    Serial.print("Discarding initial reading: ");
+    Serial.println(reading);
   }
-  return float(now-startPumpTime)/(1000.0*60.0);
-}
-
-int adjust(float p){
-  if( p < 0 ){
-    return 0;
-  }
-  return int(p);
 }
 
 void loop() {
@@ -204,16 +247,13 @@ void loop() {
 
   // If the pump is on and we're above max pressure, then turn it off.
   if( pumpOn && pressure > MAX_PRESSURE ){
-    relay(LOW);
-    pumpOn = false;
+    setPumpState(false);
     MAX7219init();
   }
 
   // If pump is off but below min pressure, turn it on.
   if( !pumpOn && pressure < MIN_PRESSURE ){
-    relay(HIGH);
-    pumpOn = true;
-    startPumpTimer();
+    setPumpState(true);
     MAX7219init();
   }
 }
