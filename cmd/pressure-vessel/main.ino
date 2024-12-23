@@ -73,9 +73,44 @@ void flash(int n, int p) {
   }
 }
 
+void startPumpTimer(){
+  startPumpTime = millis();
+}
+
+// getPumpTime returns the pump time in minutes.
+float getPumpTime(){
+  unsigned long now = millis();
+  if (now < startPumpTime) {
+    startPumpTime = 0;
+    Serial.println("Time rolled over!");
+  }
+  return float(now-startPumpTime)/(1000.0*60.0);
+}
+
+int adjust(float p){
+  if( p < 0 ){
+    return 0;
+  }
+  return int(p);
+}
+
 bool pumpOn = false;
 unsigned long startPumpTime = 0;
 int alarmCount = 0; // Global to track alarm state entries.
+
+void setPumpState(bool state) {
+  if (state) {
+    relay(HIGH);
+    pumpOn = true;
+    startPumpTimer();
+    Serial.println("Pump turned ON.");
+  } else {
+    relay(LOW);
+    pumpOn = false;
+    Serial.println("Pump turned OFF.");
+  }
+}
+
 
 // This will put arduino into an alarm state i.e. something
 // went wrong.
@@ -178,27 +213,6 @@ void setup() {
     Serial.print("Discarding initial reading: ");
     Serial.println(reading);
   }
-}
-
-void startPumpTimer(){
-  startPumpTime = millis();
-}
-
-// getPumpTime returns the pump time in minutes.
-float getPumpTime(){
-  unsigned long now = millis();
-  if (now < startPumpTime) {
-    startPumpTime = 0;
-    Serial.println("Time rolled over!");
-  }
-  return float(now-startPumpTime)/(1000.0*60.0);
-}
-
-int adjust(float p){
-  if( p < 0 ){
-    return 0;
-  }
-  return int(p);
 }
 
 void loop() {
