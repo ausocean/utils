@@ -1,6 +1,8 @@
 /*
 AUTHORS
   Saxon Nelson-Milton <saxon@ausocean.org>
+  Alan Noble <alan@ausocean.org>
+  Trek Hopton <trek@ausocean.org>
 
 LICENSE
   Copyright (C) 2020-2024 the Australian Ocean Lab (AusOcean)
@@ -73,6 +75,7 @@ void flash(int n, int p) {
   }
 }
 
+unsigned long startPumpTime = 0; // Global to track pump start time.
 void startPumpTimer(){
   startPumpTime = millis();
 }
@@ -94,8 +97,7 @@ int adjust(float p){
   return int(p);
 }
 
-bool pumpOn = false;
-unsigned long startPumpTime = 0;
+bool pumpOn = false; // Glbal to track pump state.
 int alarmCount = 0; // Global to track alarm state entries.
 
 void setPumpState(bool state) {
@@ -123,8 +125,7 @@ void alarmed(int flashes) {
   Serial.println(alarmCount);
 
   // Ensure pump is off for safety.
-  relay(LOW);
-  pumpOn = false;
+  setPumpState(false);
 
   // Stay in alarm state until timeout AND pressure is below MAX_PRESSURE.
   while (true) {
@@ -246,16 +247,13 @@ void loop() {
 
   // If the pump is on and we're above max pressure, then turn it off.
   if( pumpOn && pressure > MAX_PRESSURE ){
-    relay(LOW);
-    pumpOn = false;
+    setPumpState(false);
     MAX7219init();
   }
 
   // If pump is off but below min pressure, turn it on.
   if( !pumpOn && pressure < MIN_PRESSURE ){
-    relay(HIGH);
-    pumpOn = true;
-    startPumpTimer();
+    setPumpState(true);
     MAX7219init();
   }
 }
