@@ -31,6 +31,7 @@ package pool
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"time"
 )
@@ -75,7 +76,7 @@ func (b *Buffer) Len() int {
 	return len(b.full)
 }
 
-// Write writes the bytes in b to the next current or next available element of the pool buffer
+// Write writes the bytes in p to the next current or next available element of the pool buffer
 // it returns the number of bytes written and any error.
 // If no element can be gained within the allocation or stolen from the queue, ErrStall is
 // returned. If a write was successful but a previous write was dropped, ErrDropped is
@@ -85,7 +86,7 @@ func (b *Buffer) Len() int {
 // write operation.
 func (b *Buffer) Write(p []byte) (int, error) {
 	if int64(len(p)) > b.maxAlloc {
-		return 0, ErrTooLong
+		return 0, fmt.Errorf("can't write bytes, length: %v, maxAlloc: %v: %w", len(p), b.maxAlloc, ErrTooLong)
 	}
 	dropped, err := stealFrom(b.full, len(p))
 	if err != nil {
