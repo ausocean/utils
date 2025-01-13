@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log Stream</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f7f7f7;
+            color: #333;
+        }
+        
+        /* General styles */
+        #log {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 10px;
+            background-color: #222; /* Darker background */
+            color: #ddd; /* Light text */
+            font-family: "Courier New", Courier, monospace;
+            white-space: pre-wrap; /* Preserve formatting */
+            overflow-y: auto; /* Scroll only when needed */
+            max-height: 95vh; /* Avoid taking full page height */
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            font-size: 11px;
+        }
+
+        .log-row {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 0px 10px;
+            border-bottom: 1px solid #333;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .log-row:hover {
+            background-color: #333;
+        }
+
+        .severity-icon {
+            margin-right: 10px;
+            font-size: 1.2em; /* Slightly larger for emphasis */
+        }
+
+        .time {
+            color: #aaa;
+            margin-right: 20px;
+            white-space: nowrap;
+        }
+
+        .message {
+            flex-grow: 1;
+            color: #fff;
+        }
+
+        .extra-field {
+            color: #b3e5fc; /* Light blue for request/reply fields */
+            font-style: italic;
+            margin-left: 20px;
+            max-width: 600px;
+        }
+
+        .log-error-text {
+            display: inline-block;
+            margin-left: 10px;
+            color: #ff4081; /* Pink/red color for errors */
+            font-size: 0.9em;
+            font-style: italic;
+            max-width: 600px; /* Limit the width of the error text */
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .log-details {
+            background-color: #333;
+            color: #ccc;
+            padding: 10px;
+            margin-top: 5px;
+            font-size: 0.9em;
+            white-space: pre-wrap;
+            border-radius: 5px;
+        }
+
+    </style>
+</head>
+<body>
+    <div id="log"></div>
+    <script>
+        const streamLogs = async () => {
+            const logElement = document.getElementById("log");
+            const severityIcons = {
+                debug: "⚪",  
+                info: "🔵",  
+                warn: "🟠",   
+                error: "🔴"   
+            };
+
+            const response = await fetch("/logs");
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) break;
+
+                const lines = decoder.decode(value).split("\n");
+                lines.forEach(line => {
+                    if (!line.trim()) return; // Skip empty lines.
+                    try {
+                        const logData = JSON.parse(line);
+
+                        const logRow = document.createElement("div");
+                        logRow.className = "log-row";
+
+                        // Add severity indicator.
+                        const severity = logData.level || "debug";
+                        const icon = severityIcons[severity] || "⚪";
+
+                        const iconElement = document.createElement("span");
+                        iconElement.className = "severity-icon";
+                        iconElement.textContent = icon;
+                        iconElement.title = severity.toUpperCase(); // Tooltip text for the level.
+
+                        const timeElement = document.createElement("div");
+                        timeElement.className = "time";
+                        timeElement.textContent = new Date(logData.time).toLocaleString();
+
+                        const messageElement = document.createElement("div");
+                        messageElement.className = "message";
+                        messageElement.textContent = logData.message;
+
+                        const extraFieldElement = document.createElement("div");
+                        extraFieldElement.className = "extra-field";
+                        const extraField = logData.request || logData.reply || "";
+                        if (extraField) {
+                            extraFieldElement.textContent = `→ ${extraField}`;
+                        }
+
+                        // Add error text for "warn" or "error" level logs.
+                        let errorText = "";
+                        if ((severity === "warn" || severity === "error") && logData.error) {
+                            errorText = logData.error;
+                        }
+
+                        const errorTextElement = document.createElement("div");
+                        errorTextElement.className = "log-error-text";
+                        errorTextElement.textContent = errorText.length > 150 ? errorText.substring(0, 150) + "..." : errorText; // Truncate if too long.
+
+                        // Add size if it exists.
+                        const sizeElement = document.createElement("div");
+                        sizeElement.className = "extra-field";
+                        const size = logData.size || "";
+                        if (size) {
+                            sizeElement.textContent = `Size: ${size}`;
+                        }
+                        
+                        logRow.appendChild(iconElement);
+                        logRow.appendChild(timeElement);
+                        logRow.appendChild(messageElement);
+                        if (extraField) logRow.appendChild(extraFieldElement);
+                        if (errorText) logRow.appendChild(errorTextElement);
+                        if (size) logRow.appendChild(sizeElement);
+
+                        // Expandable details.
+                        const details = document.createElement("div");
+                        details.className = "log-details";
+                        details.style.display = "none";
+                        details.textContent = JSON.stringify(logData, null, 2);
+
+                        logRow.addEventListener("click", () => {
+                            details.style.display = details.style.display === "none" ? "block" : "none";
+                        });
+
+                        logElement.appendChild(logRow);
+                        logElement.appendChild(details);
+                        logElement.scrollTop = logElement.scrollHeight;
+                    } catch (error) {
+                        console.error("error parsing log data:", error);
+                    }
+                });
+            }
+        };
+
+
+        streamLogs();
+    </script>
+</body>
+</html>
