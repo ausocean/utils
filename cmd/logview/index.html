@@ -93,15 +93,14 @@
 </head>
 <body>
     <div id="log"></div>
-
     <script>
         const streamLogs = async () => {
             const logElement = document.getElementById("log");
             const severityIcons = {
-                debug: "⚪",  // White circle
-                info: "🔵",   // Blue circle
-                warn: "🟠",   // Orange circle
-                error: "🔴"   // Red circle
+                debug: "⚪",  
+                info: "🔵",  
+                warn: "🟠",   
+                error: "🔴"   
             };
 
             const response = await fetch("/logs");
@@ -114,14 +113,14 @@
 
                 const lines = decoder.decode(value).split("\n");
                 lines.forEach(line => {
-                    if (!line.trim()) return; // Skip empty lines
+                    if (!line.trim()) return; // Skip empty lines.
                     try {
                         const logData = JSON.parse(line);
 
                         const logRow = document.createElement("div");
                         logRow.className = "log-row";
 
-                        // Add severity indicator
+                        // Add severity indicator.
                         const severity = logData.level || "debug";
                         const icon = severityIcons[severity] || "⚪";
 
@@ -145,7 +144,7 @@
                             extraFieldElement.textContent = `→ ${extraField}`;
                         }
 
-                        // Add error text for "warn" or "error" level logs
+                        // Add error text for "warn" or "error" level logs.
                         let errorText = "";
                         if ((severity === "warn" || severity === "error") && logData.error) {
                             errorText = logData.error;
@@ -153,9 +152,9 @@
 
                         const errorTextElement = document.createElement("div");
                         errorTextElement.className = "log-error-text";
-                        errorTextElement.textContent = errorText.length > 150 ? errorText.substring(0, 150) + "..." : errorText; // Truncate if too long
+                        errorTextElement.textContent = errorText.length > 150 ? errorText.substring(0, 150) + "..." : errorText; // Truncate if too long.
 
-                        // Add size if it exists
+                        // Add size if it exists.
                         const sizeElement = document.createElement("div");
                         sizeElement.className = "extra-field";
                         const size = logData.size || "";
@@ -167,10 +166,10 @@
                         logRow.appendChild(timeElement);
                         logRow.appendChild(messageElement);
                         if (extraField) logRow.appendChild(extraFieldElement);
-                        if (errorText) logRow.appendChild(errorTextElement);  // Add the error text directly in the row
+                        if (errorText) logRow.appendChild(errorTextElement);
                         if (size) logRow.appendChild(sizeElement);
 
-                        // Expandable details
+                        // Expandable details.
                         const details = document.createElement("div");
                         details.className = "log-details";
                         details.style.display = "none";
@@ -182,9 +181,9 @@
 
                         logElement.appendChild(logRow);
                         logElement.appendChild(details);
-                        logElement.scrollTop = logElement.scrollHeight; // Auto-scroll
+                        logElement.scrollTop = logElement.scrollHeight;
                     } catch (error) {
-                        console.error("Error parsing log data:", error);
+                        console.error("error parsing log data:", error);
                     }
                 });
             }
