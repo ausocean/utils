@@ -43,6 +43,7 @@ const (
 	Depth             Code = "DPT"
 	GPSFix            Code = "GGA"
 	DCVoltage         Code = "DCV"
+	DCCurrent         Code = "DCI"
 	ACVoltage         Code = "ACV"
 	HeadingMagnetic   Code = "HDM"
 	HeadingTrue       Code = "HDT"
@@ -71,6 +72,7 @@ const (
 	TypeLength      Type = "length"
 	TypePosition    Type = "position"
 	TypeVoltage     Type = "voltage"
+	TypeCurrent     Type = "current"
 	TypePercent     Type = "percent"
 	TypePressure    Type = "pressure"
 	TypeTemperature Type = "temperature"
@@ -90,6 +92,7 @@ func DefaultQuantities() []Quantity {
 		{Code: Depth, Name: "Depth", Type: TypeLength},
 		{Code: GPSFix, Name: "GPS Fix", Type: TypePosition},
 		{Code: DCVoltage, Name: "DC Voltage", Type: TypeVoltage},
+		{Code: DCCurrent, Name: "DC Current", Type: TypeCurrent},
 		{Code: ACVoltage, Name: "AC Voltage", Type: TypeVoltage},
 		{Code: HeadingMagnetic, Name: "Heading (Magnetic)", Type: TypeAngle},
 		{Code: HeadingTrue, Name: "Heading (True)", Type: TypeAngle},
