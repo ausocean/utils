@@ -1,4 +1,6 @@
 /*
+AUTHOR
+  Trek Hopton <trek@ausocean.org>
 LICENSE
   Copyright (C) 2025 the Australian Ocean Lab (AusOcean)
 
@@ -36,17 +38,13 @@ const (
 	logFile  = "/var/log/netsender/netsender.log"
 )
 
-var raspberryPiAddr string
-var password string
+var (
+	raspberryPiAddr string
+	password        string
+)
 
-func init() {
-	flag.StringVar(&raspberryPiAddr, "ip", "192.168.1.2:22", "Raspberry Pi IP address and port")
-	flag.StringVar(&password, "password", "raspberry", "SSH password for the Raspberry Pi")
-	flag.Parse()
-}
-
-// StreamLogs establishes an SSH connection and streams the log file
-func StreamLogs(w io.Writer) {
+// streamLogs establishes an SSH connection and streams the log file.
+func streamLogs(w io.Writer) {
 	log.Println("starting log streaming")
 
 	// Ensure that the writer implements http.Flusher.
@@ -110,10 +108,14 @@ func logHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
 
-	StreamLogs(w)
+	streamLogs(w)
 }
 
 func main() {
+	flag.StringVar(&raspberryPiAddr, "ip", "192.168.1.2:22", "Raspberry Pi IP address and port")
+	flag.StringVar(&password, "password", "raspberry", "SSH password for the Raspberry Pi")
+	flag.Parse()
+
 	http.HandleFunc("/logs", logHandler)
 	http.Handle("/", http.FileServer(http.Dir(".")))
 
