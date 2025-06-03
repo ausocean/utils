@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"time"
 )
 
 const (
@@ -23,10 +24,18 @@ type SmallScalar struct {
 	Timestamp uint32
 }
 
+type FileInfo struct {
+	Version, Count                  int
+	Start, Finish, Duration, MaxGap uint32
+	Sequential                      bool
+}
+
 func main() {
 	var path string
+	var info bool
 
 	flag.StringVar(&path, "f", "", "Path to the binary data file")
+	flag.BoolVar(&info, "i", false, "Print file info only")
 	flag.Parse()
 
 	if path == "" {
@@ -34,7 +43,6 @@ func main() {
 		return
 	}
 
-	fmt.Printf("* Reading data from '%s'\n", path)
 	file, err := os.Open(path)
 	if err != nil {
 		fmt.Printf("Error opening file: %v\n", err)
@@ -49,7 +57,7 @@ func main() {
 	}
 
 	buf := make([]byte, sz)
-	count := 0
+	var fileInfo FileInfo = FileInfo{Sequential: true}
 	var refTs, prevTs uint32
 	for {
 		n, err := file.Read(buf)
@@ -74,29 +82,55 @@ func main() {
 		// NB: Arduino/ESP32 stores numbers in little-endian format.
 		err = binary.Read(bytes.NewReader(buf), binary.LittleEndian, &record)
 		if err != nil {
-			fmt.Printf("Error unpacking record #%d: %v\n", count+1, err)
+			fmt.Printf("Error unpacking record #%d: %v\n", fileInfo.Count+1, err)
 			return
 		}
 
 		switch record.Value {
 		case versionMarker:
 			v := (int)(record.Timestamp)
-			fmt.Printf("* Version=%d\n", v)
 			if v != version {
 				fmt.Printf("Error: data file has wrong version %d", v)
 				return
 			}
+			fileInfo.Version = v
 
 		case timeMarker:
 			refTs = record.Timestamp
 			prevTs = refTs
-			fmt.Printf("* Ref timestamp=%d\n", refTs)
 
 		default:
-			fmt.Printf("%10d: %4d (+%d)\n", record.Timestamp, record.Value, record.Timestamp-prevTs)
+			if !info {
+				fmt.Printf("%d,%d\n", record.Timestamp, record.Value)
+			}
+			if fileInfo.Start == 0 {
+				fileInfo.Start = record.Timestamp
+			}
+			fileInfo.Finish = record.Timestamp
+			if record.Timestamp < prevTs {
+				fileInfo.Sequential = false
+			}
+			if prevTs != 0 && record.Timestamp-prevTs > fileInfo.MaxGap {
+				fileInfo.MaxGap = record.Timestamp - prevTs
+
+			}
 			prevTs = record.Timestamp
 		}
 
-		count++
+		fileInfo.Count++
+	}
+
+	if info {
+		const secondsPerDay = 60 * 60 * 24
+		fileInfo.Duration = fileInfo.Finish - fileInfo.Start
+		fmt.Printf("Version:    %10d\n", fileInfo.Version)
+		fmt.Printf("Count:      %10d\n", fileInfo.Count)
+		fmt.Printf("Start:      %10d %s\n", fileInfo.Start,
+			time.Unix(int64(fileInfo.Start), 0).UTC().Format("2006-01-02 15:04:05 UTC"))
+		fmt.Printf("Finish:     %10d %s\n", fileInfo.Finish,
+			time.Unix(int64(fileInfo.Finish), 0).UTC().Format("2006-01-02 15:04:05 UTC"))
+		fmt.Printf("Duration:   %10ds %5.1fd\n", fileInfo.Duration, (float64)(fileInfo.Duration)/secondsPerDay)
+		fmt.Printf("Max Gap:    %10ds\n", fileInfo.MaxGap)
+		fmt.Printf("Sequential: %10t\n", fileInfo.Sequential)
 	}
 }
