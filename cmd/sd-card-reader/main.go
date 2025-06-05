@@ -1,3 +1,20 @@
+/*
+AUTHORS
+	Alan Noble <alan@ausocean.org>
+LICENSE
+	Copyright (C) 2025 the Australian Ocean Lab (AusOcean).
+	This is free software: you can redistribute it and/or modify it
+	under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+	This is distributed in the hope that it will be useful, but WITHOUT
+	ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+	or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
+	License for more details.
+	You should have received a copy of the GNU General Public License in
+	gpl.txt. If not, see http://www.gnu.org/licenses/.
+*/
+
 // Utility to read a NetSender SD card data file.
 package main
 
@@ -17,7 +34,7 @@ const (
 	timeMarker    = 0x7fffffff
 )
 
-// SmallScalar defines the SD card data file record format
+// SmallScalar defines the SD card data file record format.
 // that NetSender uses in offline mode.
 type SmallScalar struct {
 	Value     int32
@@ -50,7 +67,7 @@ func main() {
 	}
 	defer file.Close()
 
-	// Create a record to read raw bytes into
+	// Create a record to read raw bytes into.
 	sz := binary.Size(SmallScalar{})
 	if sz != 8 {
 		panic("SmallScalar should be 8 bytes in size")
