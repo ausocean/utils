@@ -93,7 +93,7 @@ func main() {
 			return
 		}
 
-		// Create a SmallScalar struct to unpack data into
+		// Create a SmallScalar struct to unpack data into.
 		var record SmallScalar
 
 		// NB: Arduino/ESP32 stores numbers in little-endian format.
