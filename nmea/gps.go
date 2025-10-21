@@ -1,114 +1,72 @@
+/*
+AUTHOR
+  Trek Hopton <trek@ausocean.org>
+LICENSE
+  Copyright (C) 2025 the Australian Ocean Lab (AusOcean)
+
+  This is free software: you can redistribute it and/or modify it
+  under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  It is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  in gpl.txt. If not, see http://www.gnu.org/licenses/.
+*/
+
 package nmea
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
 	gonmea "github.com/adrianmo/go-nmea"
 )
 
-// GPSData stores data collected from NMEA sentences
+// GPSData is a parsed GPS fix from a GGA sentence.
 type GPSData struct {
-	Latitude         *float64   // Latitude
-	Longitude        *float64   // Longitude
-	LastFixTime      *time.Time // Time of last GPS fix
-	Speed            *float64   // Speed in knots
-	Course           *float64   // True course
-	Variation        *float64   // Magnetic variation
-	FixQuality       *string    // Quality of fix.
-	NumSatellites    *int64     // Number of satellites in use.
-	Altitude         *float64   // Altitude.
-	TrueTrack        *float64   // True track made good (degrees)
-	MagneticTrack    *float64   // Magnetic track made good
-	GroundSpeedKnots *float64   // Ground speed in Knots
-	GroundSpeedKPH   *float64   // Ground speed in km/hr
-	Heading          *float64   // Heading in degrees
-	True             *bool      // Heading is relative to true north
+	Lat   float64   // Latitude in decimal degrees.
+	Lon   float64   // Longitude in decimal degrees.
+	Alt   float64   // Altitude in meters.
+	Time  time.Time // Full UTC timestamp using base date + GGA time-of-day.
+	Valid bool      // True if the fix is valid (FixQuality != 0).
 }
 
-func ProcessSentence(dst GPSData, raw string) (GPSData, error) {
+// Parse parses a GGA sentence using baseDate for the date and the GGA time for the time-of-day.
+// baseDate should be in UTC (e.g., Text.Date.UTC()).
+// Returns Valid=false (no error) if FixQuality is invalid.
+func Parse(raw string, baseDate time.Time) (GPSData, error) {
 	s, err := gonmea.Parse(raw)
 	if err != nil {
-		return dst, fmt.Errorf("failed to process sentence: %w", err)
+		return GPSData{}, fmt.Errorf("go-nmea parse failed: %w", err)
 	}
 
-	switch s := s.(type) {
-	case gonmea.RMC:
-		if s.Validity != "A" {
-			// Not valid data.
-			return dst, errors.New("invalid data in RMC sentence")
-		}
-
-		newFix := time.Date(
-			s.Date.YY,
-			time.Month(s.Date.MM),
-			s.Date.DD,
-			s.Time.Hour,
-			s.Time.Minute,
-			s.Time.Second,
-			s.Time.Millisecond*1000000,
-			time.UTC,
-		)
-
-		// Valid, update
-		dst.Latitude = &s.Latitude
-		dst.Longitude = &s.Longitude
-		dst.Speed = &s.Speed
-		dst.Course = &s.Course
-		dst.Variation = &s.Variation
-		dst.LastFixTime = &newFix
-	case gonmea.GGA:
-		currentTime := time.Now()
-		newFix := time.Date(
-			currentTime.Year(),
-			currentTime.Month(),
-			currentTime.Day(),
-			s.Time.Hour,
-			s.Time.Minute,
-			s.Time.Second,
-			s.Time.Millisecond*1000000,
-			time.UTC,
-		)
-		dst.Latitude = &s.Latitude
-		dst.Longitude = &s.Longitude
-		dst.FixQuality = &s.FixQuality
-		dst.NumSatellites = &s.NumSatellites
-		dst.Altitude = &s.Altitude
-		dst.LastFixTime = &newFix
-	case gonmea.GLL:
-		if s.Validity != "A" {
-			// Not valid data.
-			return dst, errors.New("invalid data in GLL sentence")
-		}
-
-		currentTime := time.Now()
-		newFix := time.Date(
-			currentTime.Year(),
-			currentTime.Month(),
-			currentTime.Day(),
-			s.Time.Hour,
-			s.Time.Minute,
-			s.Time.Second,
-			s.Time.Millisecond*1000000,
-			time.UTC,
-		)
-		dst.Latitude = &s.Latitude
-		dst.Longitude = &s.Longitude
-		dst.LastFixTime = &newFix
-	case gonmea.VTG:
-		dst.TrueTrack = &s.TrueTrack
-		dst.MagneticTrack = &s.MagneticTrack
-		dst.GroundSpeedKnots = &s.GroundSpeedKnots
-		dst.GroundSpeedKPH = &s.GroundSpeedKPH
-	case gonmea.HDT:
-		dst.Heading = &s.Heading
-		dst.True = &s.True
-	case gonmea.ZDA, gonmea.PGRME, gonmea.GSV, gonmea.GSA:
-		return dst, fmt.Errorf("sentence type %s not implemented", s.Prefix())
-	default:
-		return dst, fmt.Errorf("failure to read parsed sentence: %s", s.String())
+	gga, ok := s.(gonmea.GGA)
+	if !ok {
+		return GPSData{}, fmt.Errorf("unsupported NMEA type: %T", s)
 	}
 
-	return dst, nil
+	if gga.FixQuality == gonmea.Invalid {
+		return GPSData{Valid: false}, nil
+	}
+
+	// Build full timestamp from base date + GGA time-of-day in UTC.
+	t := time.Date(
+		baseDate.Year(), baseDate.Month(), baseDate.Day(),
+		gga.Time.Hour, gga.Time.Minute, gga.Time.Second,
+		gga.Time.Millisecond*1_000_000,
+		time.UTC,
+	)
+
+	return GPSData{
+		Lat:   gga.Latitude,
+		Lon:   gga.Longitude,
+		Alt:   gga.Altitude,
+		Time:  t,
+		Valid: true,
+	}, nil
 }
