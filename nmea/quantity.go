@@ -60,6 +60,7 @@ const (
 	TrueWindSpeed     Code = "TWS"
 	WaveHeight        Code = "MWS"
 	Video             Code = "VID"
+	Lux               Code = "LUX"
 	Other             Code = "OTH"
 )
 
@@ -78,6 +79,7 @@ const (
 	TypeTemperature Type = "temperature"
 	TypeDistance    Type = "distance"
 	TypeVideo       Type = "video"
+	TypeBrightness  Type = "brightness"
 	TypeUnknown     Type = "unknown"
 )
 
@@ -109,6 +111,7 @@ func DefaultQuantities() []Quantity {
 		{Code: TrueWindSpeed, Name: "True Wind Speed", Type: TypeSpeed},
 		{Code: WaveHeight, Name: "Wave Height", Type: TypeDistance},
 		{Code: Video, Name: "Video", Type: TypeVideo},
+		{Code: Lux, Name: "Lux", Type: TypeBrightness},
 		{Code: Other, Name: "Other", Type: TypeUnknown},
 	}
 }
