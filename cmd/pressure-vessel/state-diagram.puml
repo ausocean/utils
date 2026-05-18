@@ -1,0 +1,66 @@
+@startuml pressure-vessel-state-diagram
+title Pressure Vessel Controller — State Diagram
+
+' Layout / styling.
+skinparam StateBackgroundColor<<normal>> #E8F4F8
+skinparam StateBorderColor<<normal>>     #2C3E50
+skinparam StateBackgroundColor<<alarm>>  #FDE8E8
+skinparam StateBorderColor<<alarm>>      #C0392B
+skinparam StateBackgroundColor<<setup>>  #F0E8F8
+skinparam StateBorderColor<<setup>>      #6C3483
+skinparam StateFontStyle bold
+skinparam ArrowColor #555555
+skinparam shadowing false
+skinparam DefaultFontName "Helvetica"
+
+' States.
+state "Setup" as Setup <<setup>> {
+  Setup : Init pins (relay, LED, display)
+  Setup : Init MAX7219 display
+  Setup : Begin Serial @ 9600
+  Setup : Discard 10 initial readings
+}
+
+state "Pump OFF" as PumpOff <<normal>> {
+  PumpOff : Relay LOW
+  PumpOff : pumpOn = false
+  PumpOff : Read & display pressure
+}
+
+state "Pump ON" as PumpOn <<normal>> {
+  PumpOn : Relay HIGH
+  PumpOn : pumpOn = true
+  PumpOn : Track pump time
+  PumpOn : Read & display pressure
+}
+
+state "ALARM — Pump Timeout" as AlarmTime <<alarm>> {
+  AlarmTime : Flash LED 1x
+  AlarmTime : Pump forced OFF
+  AlarmTime : alarmCount++
+  AlarmTime : Blocks in while loop
+}
+
+state "ALARM — Overpressure" as AlarmPress <<alarm>> {
+  AlarmPress : Flash LED 2x
+  AlarmPress : Pump forced OFF
+  AlarmPress : alarmCount++
+  AlarmPress : Blocks in while loop
+}
+
+' Transitions.
+[*] --> Setup
+Setup --> PumpOff : setup() complete
+
+PumpOff --> PumpOn  : pressure < MIN_PRESSURE\n(15 kPa)
+PumpOn  --> PumpOff : pressure > MAX_PRESSURE\n(20 kPa)
+
+PumpOn  --> AlarmTime  : pumpTime > MAX_PUMP_TIME\n(2 min)
+
+PumpOn  --> AlarmPress : pressure > ABS_MAX_PRESSURE\n(300 kPa)
+PumpOff --> AlarmPress : pressure > ABS_MAX_PRESSURE\n(300 kPa)
+
+AlarmTime  --> PumpOff : elapsed > 30s\nAND pressure < MAX_PRESSURE
+AlarmPress --> PumpOff : elapsed > 30s\nAND pressure < MAX_PRESSURE
+
+@enduml
