@@ -41,6 +41,7 @@ float powerSum_W = 0.0;
 unsigned long sampleCount = 0;
 
 unsigned long sessionStartMs = 0;
+float lastEnergy_J = 0.0;
 
 float powerGraph[GRAPH_POINTS];
 int graphHead = 0;
@@ -139,7 +140,7 @@ void drawSessionView() {
 
 void drawGraphView() {
   display.clearDisplay();
-  drawHeader("Power Graph");
+  drawHeader("Energy Rate");
 
   const int graphX = 0;
   const int graphY = 16;
@@ -178,7 +179,7 @@ void drawGraphView() {
   display.print(maxPower, 2);
   display.print("W  Now ");
   display.print(lastPower_W, 2);
-  display.print("W");
+  display.print("W*");
 
   display.display();
 }
@@ -394,8 +395,13 @@ void loop() {
   lastPower_W = power_W;
   lastWattHours = wattHours;
 
+  float deltaEnergy_J = energy_J - lastEnergy_J;
+  float deltaTime_s = SAMPLE_INTERVAL_MS / 1000.0;
+  float energyRate_W = (lastEnergy_J > 0.0) ? (deltaEnergy_J / deltaTime_s) : power_W;
+  lastEnergy_J = energy_J;
+
   updateStats(power_W);
-  addPowerGraphSample(power_W);
+  addPowerGraphSample(energyRate_W);
 
   Serial.print("Current: ");
   Serial.print(current_mA);
