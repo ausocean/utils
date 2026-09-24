@@ -9,7 +9,7 @@ AUTHOR
   Saxon Nelson-Milton <saxon@ausocean.org>
 
 LICENSE
-  Copyright (C) 2017-2021 the Australian Ocean Lab (AusOcean).
+  Copyright (C) 2017-2026 the Australian Ocean Lab (AusOcean).
 
   It is free software: you can redistribute it and/or modify them
   under the terms of the GNU General Public License as published by the
@@ -214,7 +214,7 @@ func (l *JSONLogger) init() {
 
 	// If we're suppressing repetitive logs, we add a sampling layer to the core.
 	if l.suppress {
-		core = zapcore.NewSampler(core, l.samplerTick, l.logFirst, l.thenEvery)
+		core = zapcore.NewSamplerWithOptions(core, l.samplerTick, l.logFirst, l.thenEvery)
 	}
 
 	l.SugaredLogger = zap.New(core).WithOptions(
